@@ -15,7 +15,7 @@
       </mu-list-item>
       <mu-divider></mu-divider>
 
-      <mu-list-item avatar :ripple="false" button>
+      <mu-list-item avatar :ripple="false" button @click="$router.push('/bloodPressure')">
         <mu-list-item-content>
           <mu-list-item-title>Blood Pressure</mu-list-item-title>
           <mu-list-item-sub-title style="color: rgba(0, 0, 0, .87)">high / Low pressure / Heart rate</mu-list-item-sub-title>
