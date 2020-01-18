@@ -1,17 +1,28 @@
 <template>
 <mu-card style="width: 100%;  margin: 0 auto; ">
-  <mu-card-header title="Myron Avatar" sub-title="sub title">
+  <mu-card-header :title="$store.state.patient.name" :sub-title="$store.state.patient.sex+' - '+$store.state.patient.age" @click="$router.push('/')">
     <mu-avatar slot="avatar">
-      <img src="#">
+      <img src="../assets/mustermann.jpg">
     </mu-avatar>
   </mu-card-header>
   <mu-card-media :sub-title="scannResult">
-    <video id="video" width="100%" height="100%" />
+    <i class="material-icons" style="
+    margin-top: px;
+    color: beige;
+    bottom: 16px;
+    right: 16px;
+    position: absolute;
+    font-size: 1.6em;
+    z-index: 999999999;"
+    @click="nextViedeoInputDevices()">
+      sync
+    </i>
+    <video id="video" width="100%" height="100%" preload/>
   </mu-card-media>
   <mu-card-title title="Drug List" sub-title="by Dr. Who"></mu-card-title>
   <mu-card-text>
     <mu-alert color="error" delete v-if="hasError" @delete="closeAlert()" transition="mu-scale-transition">
-      <mu-icon left value="warning"/> Wrong medicine!
+      <mu-icon left value="warning" /> Wrong medicine!
     </mu-alert>
     <mu-list textline="two-line">
       <div v-for="drug in drugs">
@@ -34,7 +45,7 @@
     </mu-list>
   </mu-card-text>
   <mu-card-actions>
-    <mu-button flat>Reset</mu-button>
+    <mu-button flat @click="nextViedeoInputDevices()">Reset</mu-button>
     <mu-button flat>Confirm</mu-button>
   </mu-card-actions>
 </mu-card>
@@ -42,14 +53,18 @@
 
 <script>
 import {
-  BrowserQRCodeReader
+  BrowserMultiFormatReader,
+  NotFoundException
 } from '@zxing/library';
 
+const codeReader = new BrowserMultiFormatReader();
+
 export default {
-  name: 'HelloWorld',
+  name: 'DrugsChecker',
   data() {
     return {
       videoInputDevices: 0,
+      videoInputDevice: 0,
       drugs: [{
           id: "12345678909876543",
           name: "Dolo-Dobendan® 1,4 mg / 10 mg",
@@ -58,11 +73,11 @@ export default {
           checked: false,
         },
         {
-          id: "12345678909876543",
+          id: "123456789",
           name: "Dolo-Dobendan® 1,4 mg / 10 mg",
           Brand: "",
           dose: "3ml",
-          checked: true,
+          checked: false,
         },
       ],
       scannResult: "Please scan the barcode of the drugs",
@@ -74,10 +89,11 @@ export default {
 
   },
   methods: {
-    closeAlert () {
+    closeAlert() {
       this.hasError = false;
     },
     searchIsDrugOnTheList(id) {
+      this.hasError = false;
       let f = false;
       this.drugs.forEach(function(drug) {
         if (drug.id == id) {
@@ -92,24 +108,32 @@ export default {
     },
     startScann() {
       let vm = this;
-      const codeReader = new BrowserQRCodeReader();
       codeReader
         .listVideoInputDevices()
         .then(videoInputDevices => {
-          codeReader
-            .decodeFromInputVideoDevice(videoInputDevices[vm.videoInputDevices % videoInputDevices.length].deviceId, 'video')
-            .then(result => {
-              vm.searchIsDrugOnTheList(result.text);
-              vm.scannResult = result.text;
-              console.log(result.text)
-            })
-            .catch(err => console.error(err));
+          vm.videoInputDevices = videoInputDevices;
+          vm.readCode();
         })
         .catch(err => console.error(err));
     },
+    readCode() {
+      let vm = this;
+      codeReader.decodeFromVideoDevice(vm.videoInputDevices[vm.videoInputDevice % vm.videoInputDevices.length].deviceId, 'video', (result, err) => {
+              if (result) {
+                vm.searchIsDrugOnTheList(result.text);
+                vm.scannResult = result.text;
+                console.log(result)
+              }
+              if (err && !(err instanceof NotFoundException)) {
+                console.error(err)
+                document.getElementById('result').textContent = err
+              }
+            })
+    },
     nextViedeoInputDevices() {
       let vm = this;
-      vm.videoInputDevices++;
+      codeReader.reset();
+      vm.videoInputDevice++;
       vm.startScann();
     }
   },

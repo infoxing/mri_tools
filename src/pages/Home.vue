@@ -1,19 +1,124 @@
 <template>
-  <div class="hello">
-    sssss
-  </div>
+<mu-card style="width: 100%;  margin: 0 auto; ">
+  <mu-card-header title="unspecified" sub-title="" @click="$router.push('/')">
+    <mu-avatar slot="avatar">
+      <i class="material-icons">
+        accessible_forward
+      </i>
+    </mu-avatar>
+  </mu-card-header>
+  <mu-card-media sub-title="Please scan the patient ID">
+    <video id="video" width="100%" height="100%" />
+  </mu-card-media>
+  <mu-card-title title="" sub-title="Or enter patient ID manually"></mu-card-title>
+
+  <mu-card-text>
+    <mu-text-field v-model="scannResult" placeholder="Please input......"></mu-text-field><br/>
+  </mu-card-text>
+  <mu-card-actions>
+    <mu-button flat @click="reset">Reset</mu-button>
+    <mu-button flat @click="confirm">Confirm</mu-button>
+  </mu-card-actions>
+</mu-card>
 </template>
 
 <script>
+import {
+  BrowserQRCodeReader
+} from '@zxing/library';
+
 export default {
-  name: 'HelloWorld',
+  name: 'Home',
+  data() {
+    return {
+      videoInputDevices: 0,
+      drugs: [{
+          id: "12345678909876543",
+          name: "Dolo-Dobendan® 1,4 mg / 10 mg",
+          Brand: "",
+          dose: "3ml",
+          checked: false,
+        },
+        {
+          id: "12345678909876543",
+          name: "Dolo-Dobendan® 1,4 mg / 10 mg",
+          Brand: "",
+          dose: "3ml",
+          checked: true,
+        },
+      ],
+      scannResult: "",
+      hasError: false,
+    }
+  },
+  mounted() {
+    this.startScann();
+
+  },
+  methods: {
+    reset(){
+      this.scannResult="";
+    },
+    confirm(){
+      this.$router.push('/patientDashboard');
+    },
+    closeAlert () {
+      this.hasError = false;
+    },
+    searchIsDrugOnTheList(id) {
+      let f = false;
+      this.drugs.forEach(function(drug) {
+        if (drug.id == id) {
+          drug.checked = true;
+          f = true;
+        }
+      });
+      if (f == false) {
+        console.log("xxxx");
+        this.hasError = true;
+      }
+    },
+    startScann() {
+      let vm = this;
+      const codeReader = new BrowserQRCodeReader();
+      codeReader
+        .listVideoInputDevices()
+        .then(videoInputDevices => {
+          codeReader
+            .decodeFromInputVideoDevice(videoInputDevices[vm.videoInputDevices % videoInputDevices.length].deviceId, 'video')
+            .then(result => {
+              vm.searchIsDrugOnTheList(result.text);
+              vm.scannResult = result.text;
+              vm.$router.push('/patientDashboard')
+              console.log(result.text)
+            })
+            .catch(err => console.error(err));
+        })
+        .catch(err => console.error(err));
+    },
+    nextViedeoInputDevices() {
+      let vm = this;
+      vm.videoInputDevices++;
+      vm.startScann();
+    }
+  },
   props: {
-    msg: String
+    // msg: String
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.mu-scale-transition-enter-active,
+.mu-scale-transition-leave-active {
+  transition: transform .45s cubic-bezier(0.23, 1, 0.32, 1), opacity .45s cubic-bezier(0.23, 1, 0.32, 1);
+  backface-visibility: hidden;
+}
 
+.mu-scale-transition-enter,
+.mu-scale-transition-leave-active {
+  transform: scale(0);
+  opacity: 0;
+}
 </style>
