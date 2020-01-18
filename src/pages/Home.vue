@@ -8,6 +8,17 @@
     </mu-avatar>
   </mu-card-header>
   <mu-card-media sub-title="Please scan the patient ID">
+    <i class="material-icons" style="
+    margin-top: px;
+    color: beige;
+    bottom: 16px;
+    right: 16px;
+    position: absolute;
+    font-size: 1.6em;
+    z-index: 999999999;"
+    @click="nextViedeoInputDevices()">
+      sync
+    </i>
     <video id="video" width="100%" height="100%" />
   </mu-card-media>
   <mu-card-title title="" sub-title="Or enter patient ID manually"></mu-card-title>
